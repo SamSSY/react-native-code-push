@@ -112,7 +112,9 @@ public class CodePushUpdateUtils {
         }
     }
 
-    public static void verifyHashForDiffUpdate(String folderPath, String expectedHash) {
+    // Recursively generate a sorted JSON list of format <relativeFilePath>: <fileHash>, and then
+    // hash the list
+    public static String computeHashForFolder(String folderPath) {
         ArrayList<String> updateContentsManifest = new ArrayList<>();
         addContentsOfFolderToManifest(folderPath, "", updateContentsManifest);
         Collections.sort(updateContentsManifest);
@@ -124,6 +126,12 @@ public class CodePushUpdateUtils {
         // The JSON serialization turns path separators into "\/", e.g. "CodePush\/assets\/image.png"
         String updateContentsManifestString = updateContentsJSONArray.toString().replace("\\/", "/");
         String updateContentsManifestHash = computeHash(new ByteArrayInputStream(updateContentsManifestString.getBytes()));
+
+        return updateContentsManifestHash;
+    }
+
+    public static void verifyHashForDiffUpdate(String folderPath, String expectedHash) {
+        String updateContentsManifestHash = computeHashForFolder(folderPath);
         if (!expectedHash.equals(updateContentsManifestHash)) {
             throw new CodePushInvalidUpdateException("The update contents failed the data integrity check.");
         }
